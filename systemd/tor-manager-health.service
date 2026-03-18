@@ -1,0 +1,19 @@
+[Unit]
+Description=Tor Manager - Health Check Service
+After=network.target tor-manager.service
+Requires=tor-manager.service
+
+[Service]
+Type=simple
+User=root
+ExecStart=/root/self-check-tor-systemd/tor-manager.sh check --continuous --interval 60
+Restart=on-failure
+RestartSec=30
+TimeoutStopSec=10
+
+# 安全加固
+NoNewPrivileges=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

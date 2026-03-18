@@ -1,0 +1,9 @@
+ClientTransportPlugin webtunnel exec ./tor/pluggable_transports/lyrebird
+ExcludeExitNodes {CN},{RU},{KP},{IR},{BY},{SA},{AE},{PK}
+Log info file /root/self-check-tor-systemd/var/log/info.log
+SocksPort 9050
+UseBridges 1
+Bridge webtunnel [2001:db8:3d7a:deef:9427:e3ad:6a76:5e86]:443 0C1BDD359BDAF285BA5F226CB20E0D7436EE70CD url=https://meow.sillykittens.net/wFDQ0yckFU9KTx4qTmXLFMWB ver=0.0.3
+Bridge webtunnel [2001:db8:4e9:d2ce:4e26:5805:fcec:5735]:443 5312DD03A788658C475814450C9CB57CFFBCC8FF url=https://bdrmbdrmbdrm.com/JmdLDgzRjjnW17NPRNHTJrzn ver=0.0.3
+Bridge webtunnel [2001:db8:840a:a2c2:644c:3c92:be5e:7002]:443 3AC6EF6F292072B04D6AA07BBDBE7FBB32B2B4E0 url=https://miau.sillykittens.net/4incE0XB3Pm13wHctbckvfhP ver=0.0.3
+Bridge webtunnel [2001:db8:df91:d45f:47f9:2d09:3a9a:7c22]:443 A633EAF9A7DC0E715183359C38E4DAE4515D1EF7 url=https://nothing.localenby.is/srgV09L4fn4kdkoE0vP92nvK ver=0.0.3
