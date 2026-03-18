@@ -604,7 +604,12 @@ ${C_CYAN}4. 端口配置${C_RESET}
   SOCKS 端口: 默认 9050，范围 1-65535
   Control 端口: 默认 9051，范围 1-65535
   
-${C_CYAN}5. 配置文件路径${C_RESET}
+${C_CYAN}5. 健康检测配置${C_RESET}
+  检测间隔: 默认 300 秒（5 分钟），最小 10 秒
+  最大失败次数: 默认 3 次，范围 1-100
+  检测超时: 默认 30 秒，范围 5-300 秒
+  
+${C_CYAN}6. 配置文件路径${C_RESET}
   默认: 当前目录/torrc
   可通过 torrc-path 命令修改
   
@@ -618,6 +623,9 @@ ${C_CYAN}命令示例:${C_RESET}
   tor-manager config exclude-nodes {CN},{RU} 设置排除节点
   tor-manager config bridge add "webtunnel ..." 添加 Bridge
   tor-manager config ports --socks 9050      设置端口
+  tor-manager config check-interval 300      设置检测间隔 5 分钟
+  tor-manager config max-failures 3          设置最大失败 3 次
+  tor-manager config check-timeout 30        设置检测超时 30 秒
   tor-manager config torrc-path /path/to/torrc 设置配置文件路径
 EOF
 }
@@ -769,6 +777,101 @@ set_data_directory() {
 }
 
 #-------------------------------------------------------------------------------
+# 健康检测配置函数
+#-------------------------------------------------------------------------------
+# 获取检测间隔
+get_check_interval() {
+    echo "${CHECK_INTERVAL:-300}"
+}
+
+# 设置检测间隔
+set_check_interval() {
+    local interval=$1
+    
+    if [[ ! "${interval}" =~ ^[0-9]+$ ]] || [[ ${interval} -lt 10 ]]; then
+        log_error "无效的检测间隔: ${interval} (最小 10 秒)"
+        return 1
+    fi
+    
+    _update_config_file "CHECK_INTERVAL" "${interval}"
+    CHECK_INTERVAL="${interval}"
+    log_info "已设置检测间隔: ${interval} 秒"
+}
+
+# 获取最大失败次数
+get_max_failures() {
+    echo "${MAX_FAILURES:-3}"
+}
+
+# 设置最大失败次数
+set_max_failures() {
+    local count=$1
+    
+    if [[ ! "${count}" =~ ^[0-9]+$ ]] || [[ ${count} -lt 1 ]] || [[ ${count} -gt 100 ]]; then
+        log_error "无效的失败次数: ${count} (范围 1-100)"
+        return 1
+    fi
+    
+    _update_config_file "MAX_FAILURES" "${count}"
+    MAX_FAILURES="${count}"
+    log_info "已设置最大失败次数: ${count}"
+}
+
+# 获取检测超时
+get_check_timeout() {
+    echo "${CHECK_TIMEOUT:-30}"
+}
+
+# 设置检测超时
+set_check_timeout() {
+    local timeout=$1
+    
+    if [[ ! "${timeout}" =~ ^[0-9]+$ ]] || [[ ${timeout} -lt 5 ]] || [[ ${timeout} -gt 300 ]]; then
+        log_error "无效的超时时间: ${timeout} (范围 5-300 秒)"
+        return 1
+    fi
+    
+    _update_config_file "CHECK_TIMEOUT" "${timeout}"
+    CHECK_TIMEOUT="${timeout}"
+    log_info "已设置检测超时: ${timeout} 秒"
+}
+
+# 更新配置文件中的参数
+_update_config_file() {
+    local key=$1
+    local value=$2
+    local config_file="${ETC_DIR}/tor-manager.conf"
+    
+    if [[ ! -f "${config_file}" ]]; then
+        log_error "配置文件不存在: ${config_file}"
+        return 1
+    fi
+    
+    # 使用 sed 更新配置文件
+    if grep -q "^${key}=" "${config_file}" 2>/dev/null; then
+        sed -i "s|^${key}=.*|${key}=${value}|" "${config_file}"
+    else
+        # 如果不存在，添加到文件末尾
+        echo "${key}=${value}" >> "${config_file}"
+    fi
+}
+
+# 显示健康检测配置
+show_health_config() {
+    echo -e "${C_WHITE}=== 健康检测配置 ===${C_RESET}"
+    echo ""
+    echo -e "${C_CYAN}检测参数:${C_RESET}"
+    echo -e "  检测间隔:       $(get_check_interval) 秒"
+    echo -e "  最大失败次数:   $(get_max_failures)"
+    echo -e "  检测超时:       $(get_check_timeout) 秒"
+    echo ""
+    echo -e "${C_CYAN}命令示例:${C_RESET}"
+    echo "  tor-manager config check-interval 300   # 设置检测间隔 5 分钟"
+    echo "  tor-manager config max-failures 3       # 设置最大失败 3 次"
+    echo "  tor-manager config check-timeout 30     # 设置超时 30 秒"
+}
+
+#-------------------------------------------------------------------------------
 # 配置显示函数
 #-------------------------------------------------------------------------------
 # 显示当前配置
@@ -821,6 +924,12 @@ show_config() {
     else
         echo -e "  ${C_YELLOW}未配置 Bridge${C_RESET}"
     fi
+    
+    echo ""
+    echo -e "${C_CYAN}健康检测配置:${C_RESET}"
+    echo -e "  检测间隔:       $(get_check_interval) 秒 ($(( $(get_check_interval) / 60 )) 分钟)"
+    echo -e "  最大失败次数:   $(get_max_failures)"
+    echo -e "  检测超时:       $(get_check_timeout) 秒"
     
     # 显示备份列表
     local backups=$(list_torrc_backups | wc -l)
@@ -972,6 +1081,30 @@ cmd_config() {
         log-level)
             set_log_level "$@"
             ;;
+        check-interval)
+            if [[ -z "$1" ]]; then
+                echo "当前检测间隔: $(get_check_interval) 秒"
+            else
+                set_check_interval "$1"
+            fi
+            ;;
+        max-failures)
+            if [[ -z "$1" ]]; then
+                echo "当前最大失败次数: $(get_max_failures)"
+            else
+                set_max_failures "$1"
+            fi
+            ;;
+        check-timeout)
+            if [[ -z "$1" ]]; then
+                echo "当前检测超时: $(get_check_timeout) 秒"
+            else
+                set_check_timeout "$1"
+            fi
+            ;;
+        health)
+            show_health_config
+            ;;
         torrc-path)
             local action=$1
             case "${action}" in
@@ -1005,6 +1138,9 @@ cmd_config() {
             echo "  exit-nodes     出口节点配置"
             echo "  exclude-nodes  排除节点配置"
             echo "  ports          端口配置"
+            echo "  check-interval 检测间隔（秒）"
+            echo "  max-failures   最大失败次数"
+            echo "  check-timeout  检测超时（秒）"
             echo "  torrc-path     配置文件路径"
             echo "  show           显示当前配置"
             echo "  edit           编辑配置文件"

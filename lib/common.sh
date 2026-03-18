@@ -374,6 +374,9 @@ ${cyan}命令:${reset}
         exit-nodes      设置出口节点国家
         exclude-nodes   设置排除节点国家
         ports           配置端口
+        check-interval  检测间隔（秒）
+        max-failures    最大失败次数
+        check-timeout   检测超时（秒）
         torrc-path      设置配置文件路径
     
     check               检测 Tor 连通性
@@ -401,6 +404,7 @@ ${cyan}示例:${reset}
     ${SCRIPT_NAME} config show
     ${SCRIPT_NAME} config bridge add
     ${SCRIPT_NAME} config exit-nodes {us},{ca}
+    ${SCRIPT_NAME} config check-interval 300
     ${SCRIPT_NAME} check --continuous --interval 60
     ${SCRIPT_NAME} service install
     ${SCRIPT_NAME} service start

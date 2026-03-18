@@ -320,7 +320,7 @@ tui_config_menu() {
         echo -e "  ${TUI_CYAN}2${TUI_RESET}. Bridge 配置"
         echo -e "  ${TUI_CYAN}3${TUI_RESET}. 出口节点配置"
         echo -e "  ${TUI_CYAN}4${TUI_RESET}. 排除节点配置"
-        echo -e "  ${TUI_CYAN}5${TUI_RESET}. 日志配置"
+        echo -e "  ${TUI_CYAN}5${TUI_RESET}. 健康检测配置"
         echo ""
         echo -e "  ${TUI_CYAN}6${TUI_RESET}. 配置向导"
         echo -e "  ${TUI_CYAN}7${TUI_RESET}. 编辑配置文件"
@@ -337,7 +337,7 @@ tui_config_menu() {
             2) tui_bridge_config ;;
             3) tui_exit_nodes_config ;;
             4) tui_exclude_nodes_config ;;
-            5) tui_log_config ;;
+            5) tui_health_config ;;
             6) config_wizard ;;
             7) edit_config ;;
             8) tui_restore_backup ;;
@@ -542,6 +542,65 @@ tui_log_config() {
     fi
     
     tui_success "日志配置已更新"
+}
+
+# 健康检测配置
+tui_health_config() {
+    tui_header
+    echo -e "${TUI_WHITE}【健康检测配置】${TUI_RESET}"
+    echo ""
+    
+    # 检测间隔
+    local current_interval=$(get_check_interval)
+    echo -e "当前检测间隔: ${TUI_CYAN}${current_interval} 秒${TUI_RESET} ($(( current_interval / 60 )) 分钟)"
+    echo -en "新检测间隔，秒 (留空保持，最小 10): "
+    read -r new_interval
+    
+    if [[ -n "${new_interval}" ]]; then
+        if [[ "${new_interval}" =~ ^[0-9]+$ ]] && [[ ${new_interval} -ge 10 ]]; then
+            set_check_interval "${new_interval}"
+        else
+            tui_error "无效的检测间隔: ${new_interval} (最小 10 秒)"
+            return
+        fi
+    fi
+    
+    echo ""
+    
+    # 最大失败次数
+    local current_failures=$(get_max_failures)
+    echo -e "当前最大失败次数: ${TUI_CYAN}${current_failures}${TUI_RESET}"
+    echo -en "新最大失败次数 (留空保持，范围 1-100): "
+    read -r new_failures
+    
+    if [[ -n "${new_failures}" ]]; then
+        if [[ "${new_failures}" =~ ^[0-9]+$ ]] && [[ ${new_failures} -ge 1 ]] && [[ ${new_failures} -le 100 ]]; then
+            set_max_failures "${new_failures}"
+        else
+            tui_error "无效的失败次数: ${new_failures} (范围 1-100)"
+            return
+        fi
+    fi
+    
+    echo ""
+    
+    # 检测超时
+    local current_timeout=$(get_check_timeout)
+    echo -e "当前检测超时: ${TUI_CYAN}${current_timeout} 秒${TUI_RESET}"
+    echo -en "新检测超时，秒 (留空保持，范围 5-300): "
+    read -r new_timeout
+    
+    if [[ -n "${new_timeout}" ]]; then
+        if [[ "${new_timeout}" =~ ^[0-9]+$ ]] && [[ ${new_timeout} -ge 5 ]] && [[ ${new_timeout} -le 300 ]]; then
+            set_check_timeout "${new_timeout}"
+        else
+            tui_error "无效的超时时间: ${new_timeout} (范围 5-300 秒)"
+            return
+        fi
+    fi
+    
+    echo ""
+    tui_success "健康检测配置已更新"
 }
 
 # 恢复备份

@@ -1,15 +1,20 @@
 # 运行时文件
 var/run/*.pid
 var/run/*.lock
+var/run/*.status
 
 # 日志文件
-var/log/*.log
+var/log/
+*.log
 
 # 备份文件
 var/backup/
 
 # 下载数据
 var/downloads/
+
+# 健康历史记录
+var/health_history.csv
 
 # Tor 数据目录
 data/
