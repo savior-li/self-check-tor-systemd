@@ -102,25 +102,25 @@ main() {
 
 # 显示状态
 show_status() {
-    echo "=== Tor 状态 ==="
+    echo "=== $(t "status.title" "Tor Status") ==="
     
     if [[ -x "${TOR_BIN}" ]]; then
-        echo "Tor 版本: $(${TOR_BIN} --version 2>/dev/null | head -1)"
-        echo "安装路径: ${TOR_INSTALL_DIR}"
+        echo "$(t "status.tor.version" "Tor Version"): $(${TOR_BIN} --version 2>/dev/null | head -1)"
+        echo "$(t "status.path" "Install Path"): ${TOR_INSTALL_DIR}"
     else
-        echo "Tor: 未找到 (${TOR_BIN})"
+        echo "Tor: $(t "error.not_found" "Not Found") (${TOR_BIN})"
     fi
     
     echo ""
-    echo "配置文件: ${TORRC_PATH}"
-    echo "数据目录: ${TOR_DATA_DIR}"
-    echo "日志目录: ${TOR_LOG_DIR}"
+    echo "$(t "config.torrc_path" "Config File"): ${TORRC_PATH}"
+    echo "$(t "status.data_dir" "Data Directory"): ${TOR_DATA_DIR}"
+    echo "$(t "status.log_dir" "Log Directory"): ${TOR_LOG_DIR}"
     
     echo ""
     if is_tor_running; then
-        echo "运行状态: 运行中 (PID: $(get_tor_pid))"
+        echo "$(t "status.running_status" "Running Status"): $(t "status.running" "Running") (PID: $(get_tor_pid))"
     else
-        echo "运行状态: 未运行"
+        echo "$(t "status.running_status" "Running Status"): $(t "status.stopped" "Stopped")"
     fi
 }
 
