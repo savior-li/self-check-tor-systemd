@@ -824,35 +824,25 @@ cmd_tui() {
 tui_language_menu() {
     while true; do
         tui_header
-        echo -e "${TUI_WHITE}【语言设置 / Language】${TUI_RESET}"
+        echo -e "${TUI_WHITE}【$(t "menu.language" "语言设置 / Language")】${TUI_RESET}"
         echo ""
         echo -e "  ${TUI_CYAN}1${TUI_RESET}. English (英语)"
         echo -e "  ${TUI_CYAN}2${TUI_RESET}. 中文 (简体)"
         echo -e "  ${TUI_CYAN}3${TUI_RESET}. Español (西班牙语)"
-        echo -e "  ${TUI_CYAN}4${TUI_RESET}. العربية (阿拉伯语)"
-        echo -e "  ${TUI_CYAN}5${TUI_RESET}. Bahasa Indonesia (印尼语)"
-        echo -e "  ${TUI_CYAN}6${TUI_RESET}. Português (葡萄牙语)"
-        echo -e "  ${TUI_CYAN}7${TUI_RESET}. Français (法语)"
-        echo -e "  ${TUI_CYAN}8${TUI_RESET}. 日本語 (日语)"
         echo ""
         echo -e "  ${TUI_CYAN}0${TUI_RESET}. $(t "menu.back" "返回上级菜单")"
         echo ""
         tui_separator
         
-        echo -en "${TUI_WHITE}请选择 [0-8]: ${TUI_RESET}"
+        echo -en "${TUI_WHITE}$(t "menu.select" "请选择") [0-3]: ${TUI_RESET}"
         read -r choice
         
         case ${choice} in
             1) set_language "en" && tui_success "已设置为 English" ;;
             2) set_language "zh" && tui_success "已设置为 中文" ;;
             3) set_language "es" && tui_success "已设置为 Español" ;;
-            4) set_language "ar" && tui_success "已设置为 العربية" ;;
-            5) set_language "id" && tui_success "已设置为 Bahasa Indonesia" ;;
-            6) set_language "pt" && tui_success "已设置为 Português" ;;
-            7) set_language "fr" && tui_success "已设置为 Français" ;;
-            8) set_language "ja" && tui_success "已设置为 日本語" ;;
             0) break ;;
-            *) tui_error "无效选择" ;;
+            *) tui_error "$(t "msg.invalid_choice" "无效选择")" ;;
         esac
         tui_pause
     done
