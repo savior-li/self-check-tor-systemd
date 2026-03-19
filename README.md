@@ -117,6 +117,21 @@ tor-manager/
 └── var/log/                 # 日志目录
 ```
 
+## 系统图表
+
+详细系统架构和工作流程图请参阅 [docs/diagrams.md](docs/diagrams.md)，包含：
+
+- 系统架构图
+- 模块依赖关系图
+- 目录结构图
+- 健康检测流程图
+- Tor 连接原理图
+- 配置管理工作流程
+- 服务生命周期图
+- Bootstrap 等待流程
+- 多方法进程管理
+- 数据流向图
+
 ## 配置参数
 
 编辑 `etc/tor-manager.conf`:
