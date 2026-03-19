@@ -123,29 +123,29 @@ confirm() {
 tui_status_panel() {
     tui_header
     
-    echo -e "${TUI_WHITE}【状态概览】${TUI_RESET}"
+    echo -e "${TUI_WHITE}【$(t "status.title" "状态概览")】${TUI_RESET}"
     echo ""
     
     # Tor 安装状态
-    echo -e "${TUI_CYAN}Tor 安装:${TUI_RESET}"
+    echo -e "${TUI_CYAN}$(t "status.tor_installed" "Tor 安装"):${TUI_RESET}"
     if is_tor_installed; then
-        echo -e "  版本:   ${TUI_GREEN}$(get_tor_version)${TUI_RESET}"
-        echo -e "  路径:   ${TOR_INSTALL_DIR}"
+        echo -e "  $(t "status.version" "版本"):   ${TUI_GREEN}$(get_tor_version)${TUI_RESET}"
+        echo -e "  $(t "status.path" "路径"):   ${TOR_INSTALL_DIR}"
     else
-        echo -e "  ${TUI_RED}未安装${TUI_RESET}"
+        echo -e "  ${TUI_RED}$(t "status.not_installed" "未安装")${TUI_RESET}"
     fi
     
     echo ""
     
     # 运行状态
-    echo -e "${TUI_CYAN}运行状态:${TUI_RESET}"
+    echo -e "${TUI_CYAN}$(t "status.running" "运行状态"):${TUI_RESET}"
     if is_tor_running; then
         local pid=$(get_tor_pid)
-        echo -e "  状态:   ${TUI_GREEN}运行中${TUI_RESET}"
-        echo -e "  PID:    ${pid}"
-        echo -e "  运行:   $(ps -o etime= -p ${pid} 2>/dev/null || echo "未知")"
+        echo -e "  $(t "status.status" "状态"):   ${TUI_GREEN}$(t "status.running2" "运行中")${TUI_RESET}"
+        echo -e "  $(t "status.pid" "PID"):    ${pid}"
+        echo -e "  $(t "status.uptime" "运行"):   $(ps -o etime= -p ${pid} 2>/dev/null || echo "$(t "status.unknown" "未知")")"
     else
-        echo -e "  状态:   ${TUI_RED}未运行${TUI_RESET}"
+        echo -e "  $(t "status.status" "状态"):   ${TUI_RED}$(t "status.stopped" "未运行")${TUI_RESET}"
     fi
     
     echo ""
@@ -210,20 +210,20 @@ tui_main_menu() {
     while true; do
         tui_status_panel
         
-        echo -e "${TUI_WHITE}【主菜单】${TUI_RESET}"
+        echo -e "${TUI_WHITE}【$(t "menu.main" "主菜单")】${TUI_RESET}"
         echo ""
-        echo -e "  ${TUI_CYAN}1${TUI_RESET}. 服务管理"
-        echo -e "  ${TUI_CYAN}2${TUI_RESET}. 配置管理"
-        echo -e "  ${TUI_CYAN}3${TUI_RESET}. 连接检测"
-        echo -e "  ${TUI_CYAN}4${TUI_RESET}. 查看日志"
-        echo -e "  ${TUI_CYAN}5${TUI_RESET}. 诊断工具"
-        echo -e "  ${TUI_CYAN}6${TUI_RESET}. 语言设置 (当前: $(get_language_name "$(get_language)"))"
+        echo -e "  ${TUI_CYAN}1${TUI_RESET}. $(t "menu.service" "服务管理")"
+        echo -e "  ${TUI_CYAN}2${TUI_RESET}. $(t "menu.config" "配置管理")"
+        echo -e "  ${TUI_CYAN}3${TUI_RESET}. $(t "menu.check" "连接检测")"
+        echo -e "  ${TUI_CYAN}4${TUI_RESET}. $(t "menu.logs" "查看日志")"
+        echo -e "  ${TUI_CYAN}5${TUI_RESET}. $(t "menu.diag" "诊断工具")"
+        echo -e "  ${TUI_CYAN}6${TUI_RESET}. $(t "menu.language" "语言设置") ($(get_language_name "$(get_language)"))"
         echo ""
-        echo -e "  ${TUI_CYAN}0${TUI_RESET}. 退出"
+        echo -e "  ${TUI_CYAN}0${TUI_RESET}. $(t "menu.exit" "退出")"
         echo ""
         tui_separator
         
-        echo -en "${TUI_WHITE}请选择 [0-6]: ${TUI_RESET}"
+        echo -en "${TUI_WHITE}$(t "menu.select" "请选择") [0-6]: ${TUI_RESET}"
         read -r choice
         
         case ${choice} in
@@ -235,11 +235,11 @@ tui_main_menu() {
             6) tui_language_menu ;;
             0) 
                 clear
-                echo "再见!"
+                echo "$(t "msg.goodbye" "再见!")"
                 exit 0
                 ;;
             *)
-                tui_error "无效选择"
+                tui_error "$(t "msg.invalid_choice" "无效选择")"
                 ;;
         esac
     done
@@ -252,41 +252,41 @@ tui_main_menu() {
 tui_service_menu() {
     while true; do
         tui_header
-        echo -e "${TUI_WHITE}【服务管理】${TUI_RESET}"
+        echo -e "${TUI_WHITE}【$(t "menu.service" "服务管理")】${TUI_RESET}"
         echo ""
         
         # 服务状态
-        echo -e "${TUI_CYAN}当前状态:${TUI_RESET}"
+        echo -e "${TUI_CYAN}$(t "status.current" "当前状态"):${TUI_RESET}"
         if is_tor_running; then
-            echo -e "  运行:   ${TUI_GREEN}是${TUI_RESET} (PID: $(get_tor_pid))"
+            echo -e "  $(t "status.running" "运行"):   ${TUI_GREEN}$(t "status.yes" "是")${TUI_RESET} ($(t "status.pid" "PID"): $(get_tor_pid))"
         else
-            echo -e "  运行:   ${TUI_RED}否${TUI_RESET}"
+            echo -e "  $(t "status.running" "运行"):   ${TUI_RED}$(t "status.no" "否")${TUI_RESET}"
         fi
         
         if [[ -f "${SERVICE_FILE}" ]]; then
             if systemctl is-enabled "${SERVICE_NAME}" &>/dev/null; then
-                echo -e "  自启:   ${TUI_GREEN}已启用${TUI_RESET}"
+                echo -e "  $(t "status.autostart" "自启"):   ${TUI_GREEN}$(t "status.enabled" "已启用")${TUI_RESET}"
             else
-                echo -e "  自启:   ${TUI_YELLOW}未启用${TUI_RESET}"
+                echo -e "  $(t "status.autostart" "自启"):   ${TUI_YELLOW}$(t "status.disabled" "未启用")${TUI_RESET}"
             fi
         else
-            echo -e "  服务:   ${TUI_YELLOW}未安装${TUI_RESET}"
+            echo -e "  $(t "status.service" "服务"):   ${TUI_YELLOW}$(t "status.not_installed" "未安装")${TUI_RESET}"
         fi
         
         echo ""
         tui_separator
-        echo -e "  ${TUI_CYAN}1${TUI_RESET}. 启动服务"
-        echo -e "  ${TUI_CYAN}2${TUI_RESET}. 停止服务"
-        echo -e "  ${TUI_CYAN}3${TUI_RESET}. 重启服务"
-        echo -e "  ${TUI_CYAN}4${TUI_RESET}. 查看详细状态"
+        echo -e "  ${TUI_CYAN}1${TUI_RESET}. $(t "service.start" "启动服务")"
+        echo -e "  ${TUI_CYAN}2${TUI_RESET}. $(t "service.stop" "停止服务")"
+        echo -e "  ${TUI_CYAN}3${TUI_RESET}. $(t "service.restart" "重启服务")"
+        echo -e "  ${TUI_CYAN}4${TUI_RESET}. $(t "service.status" "查看详细状态")"
         echo ""
-        echo -e "  ${TUI_CYAN}5${TUI_RESET}. 启用开机自启"
-        echo -e "  ${TUI_CYAN}6${TUI_RESET}. 禁用开机自启"
+        echo -e "  ${TUI_CYAN}5${TUI_RESET}. $(t "service.enable" "启用开机自启")"
+        echo -e "  ${TUI_CYAN}6${TUI_RESET}. $(t "service.disable" "禁用开机自启")"
         echo ""
         echo -e "  ${TUI_CYAN}7${TUI_RESET}. 安装 systemd 服务"
         echo -e "  ${TUI_CYAN}8${TUI_RESET}. 卸载 systemd 服务"
         echo ""
-        echo -e "  ${TUI_CYAN}0${TUI_RESET}. 返回主菜单"
+        echo -e "  ${TUI_CYAN}0${TUI_RESET}. $(t "menu.back_main" "返回主菜单")"
         echo ""
         
         echo -en "${TUI_WHITE}请选择: ${TUI_RESET}"
@@ -318,7 +318,7 @@ tui_service_menu() {
 tui_config_menu() {
     while true; do
         tui_header
-        echo -e "${TUI_WHITE}【配置管理】${TUI_RESET}"
+        echo -e "${TUI_WHITE}【$(t "menu.config" "配置管理")】${TUI_RESET}"
         echo ""
         
         show_config
@@ -334,7 +334,7 @@ tui_config_menu() {
         echo -e "  ${TUI_CYAN}7${TUI_RESET}. 编辑配置文件"
         echo -e "  ${TUI_CYAN}8${TUI_RESET}. 恢复备份"
         echo ""
-        echo -e "  ${TUI_CYAN}0${TUI_RESET}. 返回主菜单"
+        echo -e "  ${TUI_CYAN}0${TUI_RESET}. $(t "menu.back_main" "返回主菜单")"
         echo ""
         
         echo -en "${TUI_WHITE}请选择: ${TUI_RESET}"
@@ -359,7 +359,7 @@ tui_config_menu() {
 
 tui_ports_config() {
     tui_header
-    echo -e "${TUI_WHITE}【端口配置】${TUI_RESET}"
+    echo -e "${TUI_WHITE}【$(t "config.ports" "端口配置")】${TUI_RESET}"
     echo ""
     
     local current_socks=$(get_socks_port)
@@ -400,7 +400,7 @@ tui_ports_config() {
 tui_bridge_config() {
     while true; do
         tui_header
-        echo -e "${TUI_WHITE}【Bridge 配置】${TUI_RESET}"
+        echo -e "${TUI_WHITE}【$(t "config.bridge" "Bridge 配置")】${TUI_RESET}"
         echo ""
         
         bridge_list
@@ -475,7 +475,7 @@ tui_bridge_config() {
 # 出口节点配置
 tui_exit_nodes_config() {
     tui_header
-    echo -e "${TUI_WHITE}【出口节点配置】${TUI_RESET}"
+    echo -e "${TUI_WHITE}【$(t "config.exit_nodes" "出口节点配置")】${TUI_RESET}"
     echo ""
     
     show_country_codes
@@ -505,7 +505,7 @@ tui_exit_nodes_config() {
 # 排除节点配置
 tui_exclude_nodes_config() {
     tui_header
-    echo -e "${TUI_WHITE}【排除节点配置】${TUI_RESET}"
+    echo -e "${TUI_WHITE}【$(t "config.exclude_nodes" "排除节点配置")】${TUI_RESET}"
     echo ""
     
     show_country_codes
@@ -532,7 +532,7 @@ tui_exclude_nodes_config() {
 
 tui_log_config() {
     tui_header
-    echo -e "${TUI_WHITE}【日志配置】${TUI_RESET}"
+    echo -e "${TUI_WHITE}【$(t "config.logs" "日志配置")】${TUI_RESET}"
     echo ""
     
     echo -e "可用级别: ${TUI_CYAN}err, warn, notice, info, debug${TUI_RESET}"
@@ -555,7 +555,7 @@ tui_log_config() {
 # 健康检测配置
 tui_health_config() {
     tui_header
-    echo -e "${TUI_WHITE}【健康检测配置】${TUI_RESET}"
+    echo -e "${TUI_WHITE}【$(t "config.health" "健康检测配置")】${TUI_RESET}"
     echo ""
     
     # 检测间隔
@@ -614,7 +614,7 @@ tui_health_config() {
 # 恢复备份
 tui_restore_backup() {
     tui_header
-    echo -e "${TUI_WHITE}【恢复备份】${TUI_RESET}"
+    echo -e "${TUI_WHITE}【$(t "config.restore" "恢复备份")】${TUI_RESET}"
     echo ""
     
     local backups=$(list_torrc_backups)
@@ -646,7 +646,7 @@ tui_restore_backup() {
 tui_check_menu() {
     while true; do
         tui_header
-        echo -e "${TUI_WHITE}【连接检测】${TUI_RESET}"
+        echo -e "${TUI_WHITE}【$(t "menu.check" "连接检测")】${TUI_RESET}"
         echo ""
         
         # 显示上次检测结果
@@ -659,7 +659,7 @@ tui_check_menu() {
         echo -e "  ${TUI_CYAN}3${TUI_RESET}. 运行诊断"
         echo -e "  ${TUI_CYAN}4${TUI_RESET}. 查看统计"
         echo ""
-        echo -e "  ${TUI_CYAN}0${TUI_RESET}. 返回主菜单"
+        echo -e "  ${TUI_CYAN}0${TUI_RESET}. $(t "menu.back_main" "返回主菜单")"
         echo ""
         
         echo -en "${TUI_WHITE}请选择: ${TUI_RESET}"
@@ -702,7 +702,7 @@ tui_check_menu() {
 tui_log_viewer() {
     while true; do
         tui_header
-        echo -e "${TUI_WHITE}【日志查看】${TUI_RESET}"
+        echo -e "${TUI_WHITE}【$(t "menu.logs" "日志查看")】${TUI_RESET}"
         echo ""
         
         # 显示可用日志文件
@@ -718,7 +718,7 @@ tui_log_viewer() {
         echo -e "  ${TUI_CYAN}3${TUI_RESET}. 健康检测日志"
         echo -e "  ${TUI_CYAN}4${TUI_RESET}. 程序日志"
         echo ""
-        echo -e "  ${TUI_CYAN}0${TUI_RESET}. 返回主菜单"
+        echo -e "  ${TUI_CYAN}0${TUI_RESET}. $(t "menu.back_main" "返回主菜单")"
         echo ""
         
         echo -en "${TUI_WHITE}请选择: ${TUI_RESET}"
@@ -727,7 +727,7 @@ tui_log_viewer() {
         case ${choice} in
             1)
                 tui_header
-                echo -e "${TUI_WHITE}【Systemd 服务日志】${TUI_RESET}"
+                echo -e "${TUI_WHITE}【$(t "logs.systemd" "Systemd 服务日志")】${TUI_RESET}"
                 echo ""
                 journalctl -u tor-manager --no-pager -n 100 2>/dev/null || echo "无法读取 systemd 日志"
                 echo ""
@@ -736,7 +736,7 @@ tui_log_viewer() {
             2)
                 local tor_log="${LOG_DIR}/info.log"
                 tui_header
-                echo -e "${TUI_WHITE}【Tor 运行日志】${TUI_RESET}"
+                echo -e "${TUI_WHITE}【$(t "logs.tor" "Tor 运行日志")】${TUI_RESET}"
                 echo ""
                 if [[ -f "${tor_log}" ]]; then
                     tail -100 "${tor_log}"
@@ -749,7 +749,7 @@ tui_log_viewer() {
             3)
                 local health_log="${LOG_DIR}/health.log"
                 tui_header
-                echo -e "${TUI_WHITE}【健康检测日志】${TUI_RESET}"
+                echo -e "${TUI_WHITE}【$(t "logs.health" "健康检测日志")】${TUI_RESET}"
                 echo ""
                 if [[ -f "${health_log}" ]]; then
                     tail -100 "${health_log}"
@@ -764,7 +764,7 @@ tui_log_viewer() {
             4)
                 local app_log="${LOG_DIR}/tor-manager.log"
                 tui_header
-                echo -e "${TUI_WHITE}【程序日志】${TUI_RESET}"
+                echo -e "${TUI_WHITE}【$(t "logs.app" "程序日志")】${TUI_RESET}"
                 echo ""
                 if [[ -f "${app_log}" ]]; then
                     tail -100 "${app_log}"
@@ -786,7 +786,7 @@ tui_log_viewer() {
 #-------------------------------------------------------------------------------
 tui_diagnostic() {
     tui_header
-    echo -e "${TUI_WHITE}【诊断工具】${TUI_RESET}"
+    echo -e "${TUI_WHITE}【$(t "menu.diag" "诊断工具")】${TUI_RESET}"
     echo ""
     
     diagnose_tor
@@ -835,7 +835,7 @@ tui_language_menu() {
         echo -e "  ${TUI_CYAN}7${TUI_RESET}. Français (法语)"
         echo -e "  ${TUI_CYAN}8${TUI_RESET}. 日本語 (日语)"
         echo ""
-        echo -e "  ${TUI_CYAN}0${TUI_RESET}. 返回上级菜单"
+        echo -e "  ${TUI_CYAN}0${TUI_RESET}. $(t "menu.back" "返回上级菜单")"
         echo ""
         tui_separator
         

@@ -31,6 +31,9 @@ source "${LIB_DIR}/i18n.sh"
 # 初始化环境
 init_environment
 
+# 初始化语言（自动检测或从配置读取）
+init_language
+
 # 加载配置模块并自动修复路径
 source "${LIB_DIR}/config.sh"
 fix_torrc_paths

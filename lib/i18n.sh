@@ -129,6 +129,39 @@ detect_system_language() {
     fi
 }
 
+# 初始化语言（脚本启动时调用）
+init_language() {
+    # 首先尝试从配置文件读取
+    if [[ -f "${ETC_DIR}/tor-manager.conf" ]]; then
+        local config_lang=$(grep "^LANG=" "${ETC_DIR}/tor-manager.conf" 2>/dev/null | cut -d= -f2)
+        if [[ -n "${config_lang}" ]] && [[ " ${SUPPORTED_LANGUAGES[*]} " =~ " ${config_lang} " ]]; then
+            set_language "${config_lang}"
+            return
+        fi
+    fi
+    
+    # 其次尝试从环境变量检测
+    local sys_lang="${LANG:-${LC_ALL:-${LANGUAGE:-}}}"
+    
+    if [[ "${sys_lang}" =~ ^zh ]]; then
+        set_language "zh"
+    elif [[ "${sys_lang}" =~ ^es ]]; then
+        set_language "es"
+    elif [[ "${sys_lang}" =~ ^ar ]]; then
+        set_language "ar"
+    elif [[ "${sys_lang}" =~ ^id ]]; then
+        set_language "id"
+    elif [[ "${sys_lang}" =~ ^pt ]]; then
+        set_language "pt"
+    elif [[ "${sys_lang}" =~ ^fr ]]; then
+        set_language "fr"
+    elif [[ "${sys_lang}" =~ ^ja ]]; then
+        set_language "ja"
+    else
+        set_language "en"
+    fi
+}
+
 #===============================================================================
 # 翻译数据 - 英语 (English)
 #===============================================================================
