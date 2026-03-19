@@ -48,6 +48,30 @@ CHECK_URLS=(
 )
 
 #-------------------------------------------------------------------------------
+# 健康检测日志函数
+#-------------------------------------------------------------------------------
+# 写入健康检测日志
+health_log() {
+    local level=$1
+    local message=$2
+    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    
+    # 确保日志目录存在
+    mkdir -p "$(dirname "${CHECK_LOG_FILE}")"
+    
+    # 写入 health.log
+    echo "[${timestamp}] [${level}] ${message}" >> "${CHECK_LOG_FILE}"
+    
+    # 同时输出到标准日志
+    case ${level} in
+        INFO)  log_info "${message}" ;;
+        WARN)  log_warn "${message}" ;;
+        ERROR) log_error "${message}" ;;
+        DEBUG) log_debug "${message}" ;;
+    esac
+}
+
+#-------------------------------------------------------------------------------
 
 # 等待 Tor Bootstrap 完成
 wait_for_bootstrap() {
@@ -226,6 +250,16 @@ status=${status}
 message=${message}
 response_time=${response_time}
 EOF
+    
+    # 写入健康检测日志
+    local level="INFO"
+    [[ "${status}" == "failed" ]] && level="WARN"
+    
+    # 确保日志目录存在
+    mkdir -p "$(dirname "${CHECK_LOG_FILE}")"
+    
+    # 写入 health.log
+    echo "[${timestamp}] [${level}] ${status}: ${message} (${response_time}ms)" >> "${CHECK_LOG_FILE}"
     
     # 追加到历史记录
     echo "${timestamp},${status},${message},${response_time}" >> "${CHECK_HISTORY_FILE}"
