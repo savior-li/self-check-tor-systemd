@@ -59,7 +59,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=${TOR_INSTALL_DIR}
+WorkingDirectory=${SCRIPT_DIR}
 ExecStart=${TOR_BIN} -f ${TORRC_PATH}
 ExecReload=/bin/kill -HUP \$MAINPID
 Restart=on-failure
@@ -229,6 +229,24 @@ install_services() {
     log_info "服务安装完成"
     log_info "使用 'systemctl enable ${SERVICE_NAME}' 设置开机自启"
     log_info "使用 'systemctl start ${SERVICE_NAME}' 启动服务"
+}
+
+# 检查 systemd 服务路径是否需要更新
+check_service_path() {
+    # 如果服务文件不存在，跳过检查
+    [[ ! -f "${SERVICE_FILE}" ]] && return 0
+    
+    # 检查服务文件中的路径是否与当前路径一致
+    local service_content=$(cat "${SERVICE_FILE}")
+    local current_path="${SCRIPT_DIR}"
+    
+    if ! echo "${service_content}" | grep -q "${current_path}"; then
+        log_warn "检测到程序目录已移动，systemd 服务路径需要更新"
+        log_warn "请运行: ${SCRIPT_NAME} service install"
+        return 1
+    fi
+    
+    return 0
 }
 
 # 卸载服务

@@ -407,7 +407,8 @@ start_tor_safely() {
     
     # 手动启动
     log_debug "手动启动 Tor"
-    cd "${TOR_INSTALL_DIR}"
+    # 保持工作目录为脚本根目录，确保 torrc 中的相对路径正确
+    cd "${SCRIPT_DIR}"
     "${TOR_BIN}" -f "${TORRC_PATH}" &
     local tor_pid=$!
     

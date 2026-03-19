@@ -28,6 +28,14 @@ source "${LIB_DIR}/common.sh"
 # 初始化环境
 init_environment
 
+# 加载配置模块并自动修复路径
+source "${LIB_DIR}/config.sh"
+fix_torrc_paths
+
+# 加载服务模块并检查路径
+source "${LIB_DIR}/service.sh"
+check_service_path 2>/dev/null || true
+
 # 获取锁（防止多实例运行）
 acquire_lock
 
@@ -40,7 +48,6 @@ main() {
     
     case "${command}" in
         config)
-            source "${LIB_DIR}/config.sh"
             cmd_config "$@"
             ;;
         
@@ -50,7 +57,6 @@ main() {
             ;;
         
         service)
-            source "${LIB_DIR}/service.sh"
             cmd_service "$@"
             ;;
         
@@ -60,7 +66,6 @@ main() {
             ;;
         
         logs)
-            source "${LIB_DIR}/service.sh"
             view_logs "$@"
             ;;
         

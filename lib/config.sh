@@ -36,6 +36,97 @@ fi
 TORRC_BACKUP_DIR="${BACKUP_DIR}/torrc"
 
 #-------------------------------------------------------------------------------
+# 路径自动修复函数
+#-------------------------------------------------------------------------------
+# 自动修复 torrc 中的绝对路径，使其适配当前目录
+fix_torrc_paths() {
+    local torrc_file="${TORRC_PATH}"
+    
+    if [[ ! -f "${torrc_file}" ]]; then
+        return 0
+    fi
+    
+    local changed=false
+    
+    # 修复 ClientTransportPlugin 中的路径
+    # 匹配格式: ClientTransportPlugin xxx exec /old/path/to/lyrebird
+    if grep -qE "^ClientTransportPlugin\s+\S+\s+exec\s+/.*/(tor|pluggable_transports)" "${torrc_file}" 2>/dev/null; then
+        local old_pt_path=$(grep -oP "(?<=exec\s)/[^\s]+lyrebird" "${torrc_file}" 2>/dev/null | head -1)
+        local new_pt_path="${TOR_INSTALL_DIR}/pluggable_transports/lyrebird"
+        
+        if [[ -n "${old_pt_path}" ]] && [[ "${old_pt_path}" != "${new_pt_path}" ]]; then
+            sed -i "s|${old_pt_path}|${new_pt_path}|g" "${torrc_file}"
+            log_info "已更新 ClientTransportPlugin 路径: ${new_pt_path}"
+            changed=true
+        fi
+    fi
+    
+    # 修复 Log 文件路径
+    # 匹配格式: Log xxx file /old/path/to/log
+    if grep -qE "^Log\s+\S+\s+file\s+/" "${torrc_file}" 2>/dev/null; then
+        local old_log_path=$(grep -oP "(?<=file\s)/[^\s]+\.log" "${torrc_file}" 2>/dev/null | head -1)
+        local new_log_path="${TOR_LOG_DIR}/notice.log"
+        
+        if [[ -n "${old_log_path}" ]] && [[ "${old_log_path}" != "${new_log_path}" ]]; then
+            sed -i "s|${old_log_path}|${new_log_path}|g" "${torrc_file}"
+            log_info "已更新 Log 路径: ${new_log_path}"
+            changed=true
+        fi
+    fi
+    
+    # 修复 DataDirectory 路径
+    if grep -qE "^DataDirectory\s+/" "${torrc_file}" 2>/dev/null; then
+        local old_data_path=$(grep -oP "(?<=DataDirectory\s)/[^\s]+" "${torrc_file}" 2>/dev/null | head -1)
+        local new_data_path="${TOR_DATA_DIR}"
+        
+        if [[ -n "${old_data_path}" ]] && [[ "${old_data_path}" != "${new_data_path}" ]]; then
+            sed -i "s|${old_data_path}|${new_data_path}|g" "${torrc_file}"
+            log_info "已更新 DataDirectory 路径: ${new_data_path}"
+            changed=true
+        fi
+    fi
+    
+    ${changed} && log_info "torrc 路径已自动更新"
+    return 0
+}
+
+# 检查并创建默认 torrc
+create_default_torrc() {
+    local torrc_dir=$(dirname "${TORRC_PATH}")
+    mkdir -p "${torrc_dir}"
+    
+    cat > "${TORRC_PATH}" << EOF
+# Tor 配置文件 - 由 Tor Manager 自动生成
+# 生成时间: $(date '+%Y-%m-%d %H:%M:%S')
+
+# SOCKS 代理端口
+SocksPort 9050
+
+# Control 端口
+ControlPort 9051
+
+# 数据目录
+DataDirectory ${TOR_DATA_DIR}
+
+# 日志
+Log notice file ${TOR_LOG_DIR}/notice.log
+
+# 排除出口节点（默认排除高风险国家）
+ExcludeExitNodes {CN},{RU},{KP},{IR}
+
+# 传输插件（如果存在）
+EOF
+    
+    # 如果存在 lyrebird，添加 ClientTransportPlugin
+    local lyrebird_path="${TOR_INSTALL_DIR}/pluggable_transports/lyrebird"
+    if [[ -x "${lyrebird_path}" ]]; then
+        echo "ClientTransportPlugin webtunnel,obfs4 exec ${lyrebird_path}" >> "${TORRC_PATH}"
+    fi
+    
+    log_info "已创建默认配置文件: ${TORRC_PATH}"
+}
+
+#-------------------------------------------------------------------------------
 # Torrc 解析函数
 #-------------------------------------------------------------------------------
 # 读取 torrc 配置项
