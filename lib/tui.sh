@@ -42,13 +42,13 @@ tui_header() {
     clear
     echo -e "${TUI_CYAN}"
     cat << 'ASCII_LOGO'
-  _____ ___  ____   ___  ____    _    ____  ____  _____ ____  
- |_   _/ _ \|  _ \ / _ \|  _ \  / \  |  _ \|  _ \|  ___/ ___| 
-   | || | | | |_) | | | | |_) |/ _ \ | |_) | | | | |_  \___ \ 
-   | || |_| |  _ <| |_| |  _ </ ___ \|  __/| |_| |  _|  ___) |
-   |_| \___/|_| \_\\___/|_| \_/_/   \_\_|   |____/|_|   |____/ 
+TTTTTTT OOOOOO RRRRR     M     M   AAA   N    N   AAA   GGGGGG EEEEEE RRRRR  
+  TTT   O    O R    R    M M M M  A   A  NN   N  A   A  G      E      R    R 
+  TTT   O    O RRRRR     M  M  M AAAAAAA N N  N AAAAAAA G   GG EEE    RRRRR  
+  TTT   O    O R   R     M     M A     A N  N N A     A G    G E      R   R  
+  TTT   OOOOOO R    R    M     M A     A N   NN A     A GGGGGG EEEEEE R    R 
 ASCII_LOGO
-    echo -e "${TUI_WHITE}                        Manager v${SCRIPT_VERSION} - Tor Proxy System${TUI_RESET}"
+    echo -e "${TUI_WHITE}                            Manager v${SCRIPT_VERSION} - Tor Proxy System${TUI_RESET}"
     echo ""
 }
 
