@@ -25,6 +25,9 @@ LIB_DIR="${SCRIPT_DIR}/lib"
 # 加载公共函数
 source "${LIB_DIR}/common.sh"
 
+# 加载国际化模块
+source "${LIB_DIR}/i18n.sh"
+
 # 初始化环境
 init_environment
 
@@ -67,6 +70,10 @@ main() {
         
         logs)
             view_logs "$@"
+            ;;
+        
+        lang|language)
+            cmd_language "$@"
             ;;
         
         status)

@@ -427,6 +427,39 @@ show_version() {
     fi
 }
 
+# 语言管理命令
+cmd_language() {
+    local lang=$1
+    
+    if [[ -z "${lang}" ]]; then
+        # 显示当前语言和支持的语言
+        echo "当前语言: $(get_language_name "$(get_language)")"
+        echo ""
+        echo "支持的语言:"
+        local index=0
+        for l in "${SUPPORTED_LANGUAGES[@]}"; do
+            local name="${LANGUAGE_NAMES[${index}]}"
+            local current=""
+            [[ "${l}" == "$(get_language)" ]] && current=" *"
+            echo "  ${l} - ${name}${current}"
+            ((index++))
+        done
+        echo ""
+        echo "用法: ${SCRIPT_NAME} lang <语言代码>"
+        echo "示例: ${SCRIPT_NAME} lang zh"
+        return 0
+    fi
+    
+    # 设置语言
+    if set_language "${lang}"; then
+        echo "语言已设置为: $(get_language_name "$(get_language)")"
+    else
+        echo "不支持的语言: ${lang}"
+        echo "支持的语言: ${SUPPORTED_LANGUAGES[*]}"
+        return 1
+    fi
+}
+
 # 显示状态
 show_status() {
     local white="" cyan="" green="" yellow="" red="" reset=""

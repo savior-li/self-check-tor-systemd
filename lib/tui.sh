@@ -48,7 +48,7 @@ tui_header() {
  ║ ║  ║   ║ ║  ╚╗   ║   ║  ║ ║  ║  ║║  ║ ║  ║   ║ ║    ║  ╚╗ 
  ║ ║  ╚═══╝ ║   ║   ║   ║  ║ ║  ║  ╚║  ║ ║  ╚═══╝ ╚══╝  ║   ║ 
 ASCII_LOGO
-    echo -e "${TUI_WHITE}                               Manager v${SCRIPT_VERSION} - Tor Proxy System${TUI_RESET}"
+    echo -e "${TUI_WHITE}                    Manager v${SCRIPT_VERSION} - $(get_language_name "$(get_language)")${TUI_RESET}"
     echo ""
 }
 
@@ -217,12 +217,13 @@ tui_main_menu() {
         echo -e "  ${TUI_CYAN}3${TUI_RESET}. 连接检测"
         echo -e "  ${TUI_CYAN}4${TUI_RESET}. 查看日志"
         echo -e "  ${TUI_CYAN}5${TUI_RESET}. 诊断工具"
+        echo -e "  ${TUI_CYAN}6${TUI_RESET}. 语言设置 (当前: $(get_language_name "$(get_language)"))"
         echo ""
         echo -e "  ${TUI_CYAN}0${TUI_RESET}. 退出"
         echo ""
         tui_separator
         
-        echo -en "${TUI_WHITE}请选择 [0-5]: ${TUI_RESET}"
+        echo -en "${TUI_WHITE}请选择 [0-6]: ${TUI_RESET}"
         read -r choice
         
         case ${choice} in
@@ -231,6 +232,7 @@ tui_main_menu() {
             3) tui_check_menu ;;
             4) tui_log_viewer ;;
             5) tui_diagnostic ;;
+            6) tui_language_menu ;;
             0) 
                 clear
                 echo "再见!"
@@ -813,4 +815,45 @@ cmd_tui() {
     
     # 进入主菜单
     tui_main_menu
+}
+
+
+#-------------------------------------------------------------------------------
+# 语言设置菜单
+#-------------------------------------------------------------------------------
+tui_language_menu() {
+    while true; do
+        tui_header
+        echo -e "${TUI_WHITE}【语言设置 / Language】${TUI_RESET}"
+        echo ""
+        echo -e "  ${TUI_CYAN}1${TUI_RESET}. English (英语)"
+        echo -e "  ${TUI_CYAN}2${TUI_RESET}. 中文 (简体)"
+        echo -e "  ${TUI_CYAN}3${TUI_RESET}. Español (西班牙语)"
+        echo -e "  ${TUI_CYAN}4${TUI_RESET}. العربية (阿拉伯语)"
+        echo -e "  ${TUI_CYAN}5${TUI_RESET}. Bahasa Indonesia (印尼语)"
+        echo -e "  ${TUI_CYAN}6${TUI_RESET}. Português (葡萄牙语)"
+        echo -e "  ${TUI_CYAN}7${TUI_RESET}. Français (法语)"
+        echo -e "  ${TUI_CYAN}8${TUI_RESET}. 日本語 (日语)"
+        echo ""
+        echo -e "  ${TUI_CYAN}0${TUI_RESET}. 返回上级菜单"
+        echo ""
+        tui_separator
+        
+        echo -en "${TUI_WHITE}请选择 [0-8]: ${TUI_RESET}"
+        read -r choice
+        
+        case ${choice} in
+            1) set_language "en" && tui_success "已设置为 English" ;;
+            2) set_language "zh" && tui_success "已设置为 中文" ;;
+            3) set_language "es" && tui_success "已设置为 Español" ;;
+            4) set_language "ar" && tui_success "已设置为 العربية" ;;
+            5) set_language "id" && tui_success "已设置为 Bahasa Indonesia" ;;
+            6) set_language "pt" && tui_success "已设置为 Português" ;;
+            7) set_language "fr" && tui_success "已设置为 Français" ;;
+            8) set_language "ja" && tui_success "已设置为 日本語" ;;
+            0) break ;;
+            *) tui_error "无效选择" ;;
+        esac
+        tui_pause
+    done
 }
