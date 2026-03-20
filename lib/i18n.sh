@@ -1,576 +1,464 @@
 #!/bin/bash
-#===============================================================================
+# -*- coding: utf-8 -*-
 # Tor Manager - Internationalization (i18n) Module
-#===============================================================================
-# 支持语言: 英语、中文、西班牙语
-#===============================================================================
-
-# 支持的语言列表
-SUPPORTED_LANGUAGES=("en" "zh" "es")
-LANGUAGE_NAMES=(
-    "English"
-    "中文"
-    "Español"
-)
-
-# 当前语言（默认英语）
-CURRENT_LANGUAGE="en"
-
-# 语言文件目录
-LANG_DIR="${SCRIPT_DIR}/lang"
 
 #===============================================================================
-# 翻译函数
+# 当前语言设置
 #===============================================================================
-
-# 获取翻译
-t() {
-    local key="$1"
-    local default="$2"
-    
-    # 尝试从翻译表获取
-    local translation=""
-    eval "translation=\${TRANSLATIONS_${CURRENT_LANGUAGE}[${key}]:-}"
-    
-    if [[ -n "${translation}" ]]; then
-        echo "${translation}"
-    elif [[ -n "${default}" ]]; then
-        echo "${default}"
-    else
-        # 如果没有翻译，返回英文
-        eval "translation=\${TRANSLATIONS_en[${key}]:-}"
-        if [[ -n "${translation}" ]]; then
-            echo "${translation}"
-        else
-            echo "${key}"
-        fi
-    fi
-}
-
-# 设置语言
-set_language() {
-    local lang="$1"
-    
-    # 验证语言是否支持
-    if [[ " ${SUPPORTED_LANGUAGES[*]} " =~ " ${lang} " ]]; then
-        CURRENT_LANGUAGE="${lang}"
-        export TOR_MANAGER_LANG="${lang}"
-        
-        # 保存到配置文件
-        if [[ -f "${ETC_DIR}/tor-manager.conf" ]]; then
-            if grep -q "^LANG=" "${ETC_DIR}/tor-manager.conf" 2>/dev/null; then
-                sed -i "s|^LANG=.*|LANG=${lang}|" "${ETC_DIR}/tor-manager.conf"
-            else
-                echo "LANG=${lang}" >> "${ETC_DIR}/tor-manager.conf"
-            fi
-        fi
-        
-        return 0
-    else
-        return 1
-    fi
-}
-
-# 获取当前语言
-get_language() {
-    echo "${CURRENT_LANGUAGE}"
-}
-
-# 获取语言显示名称
-get_language_name() {
-    local lang="$1"
-    local index=0
-    
-    for l in "${SUPPORTED_LANGUAGES[@]}"; do
-        if [[ "${l}" == "${lang}" ]]; then
-            echo "${LANGUAGE_NAMES[${index}]}"
-            return
-        fi
-        ((index++))
-    done
-    
-    echo "English"
-}
-
-# 自动检测系统语言
-detect_system_language() {
-    # 检查配置文件中的设置
-    if [[ -f "${ETC_DIR}/tor-manager.conf" ]]; then
-        local config_lang=$(grep "^LANG=" "${ETC_DIR}/tor-manager.conf" 2>/dev/null | cut -d= -f2)
-        if [[ -n "${config_lang}" ]]; then
-            set_language "${config_lang}" && return
-        fi
-    fi
-    
-    # 检查环境变量
-    local sys_lang="${LANG:-${LC_ALL:-${LANGUAGE:-}}}"
-    
-    if [[ "${sys_lang}" =~ ^zh ]]; then
-        set_language "zh"
-    elif [[ "${sys_lang}" =~ ^es ]]; then
-        set_language "es"
-    else
-        set_language "en"
-    fi
-}
-
-# 初始化语言（脚本启动时调用）
-init_language() {
-    # 首先尝试从配置文件读取
-    if [[ -f "${ETC_DIR}/tor-manager.conf" ]]; then
-        local config_lang=$(grep "^LANG=" "${ETC_DIR}/tor-manager.conf" 2>/dev/null | cut -d= -f2)
-        if [[ -n "${config_lang}" ]] && [[ " ${SUPPORTED_LANGUAGES[*]} " =~ " ${config_lang} " ]]; then
-            set_language "${config_lang}"
-            return
-        fi
-    fi
-    
-    # 其次尝试从环境变量检测
-    local sys_lang="${LANG:-${LC_ALL:-${LANGUAGE:-}}}"
-    
-    if [[ "${sys_lang}" =~ ^zh ]]; then
-        set_language "zh"
-    elif [[ "${sys_lang}" =~ ^es ]]; then
-        set_language "es"
-    else
-        set_language "en"
-    fi
-}
-
-#===============================================================================
-# 翻译数据 - 英语 (English)
-#===============================================================================
-declare -A TRANSLATIONS_en=(
-    # 通用
-    ["app.name"]="Tor Manager"
-    ["app.version"]="Version"
-    ["app.description"]="Tor Proxy Management System"
-    
-    # 状态
-    ["status.title"]="Status Overview"
-    ["status.tor.installed"]="Tor Installed"
-    ["status.tor.version"]="Version"
-    ["status.tor.running"]="Running"
-    ["status.running"]="Running"
-    ["status.stopped"]="Stopped"
-    ["status.tor.stopped"]="Stopped"
-    ["status.tor.pid"]="PID"
-    ["status.tor.method"]="Run Method"
-    ["status.tor.socks_port"]="SOCKS Port"
-    ["status.tor.control_port"]="Control Port"
-    ["status.service.enabled"]="Enabled"
-    ["status.service.disabled"]="Disabled"
-    ["status.service.not_installed"]="Not Installed"
-    
-    # 配置
-    ["config.title"]="Configuration Management"
-    ["config.show"]="Show Configuration"
-    ["config.edit"]="Edit Configuration"
-    ["config.wizard"]="Configuration Wizard"
-    ["config.bridge"]="Bridge Configuration"
-    ["config.ports"]="Port Configuration"
-    ["config.exit_nodes"]="Exit Nodes"
-    ["config.exclude_nodes"]="Exclude Nodes"
-    ["config.health"]="Health Check Settings"
-    ["config.torrc_path"]="Torrc Path"
-    ["config.saved"]="Configuration saved"
-    ["config.restart_required"]="Restart required to apply changes"
-    
-    # Bridge
-    ["bridge.add"]="Add Bridge"
-    ["bridge.remove"]="Remove Bridge"
-    ["bridge.list"]="List Bridges"
-    ["bridge.clear"]="Clear All Bridges"
-    ["bridge.count"]="Bridge Count"
-    
-    # 服务
-    ["service.title"]="Service Management"
-    ["service.install"]="Install Service"
-    ["service.uninstall"]="Uninstall Service"
-    ["service.start"]="Start"
-    ["service.stop"]="Stop"
-    ["service.restart"]="Restart"
-    ["service.status"]="Status"
-    ["service.enable"]="Enable Auto-start"
-    ["service.disable"]="Disable Auto-start"
-    ["service.installed"]="Service installed"
-    ["service.uninstalled"]="Service uninstalled"
-    ["service.running"]="Service running"
-    ["service.stopped"]="Service stopped"
-    
-    # 健康检测
-    ["health.title"]="Health Check"
-    ["health.check"]="Check Now"
-    ["health.continuous"]="Continuous Check"
-    ["health.interval"]="Check Interval"
-    ["health.max_failures"]="Max Failures"
-    ["health.timeout"]="Check Timeout"
-    ["health.success"]="Connection OK"
-    ["health.failed"]="Connection Failed"
-    ["health.restarting"]="Restarting Tor..."
-    ["health.diagnose"]="Diagnostic Tool"
-    
-    # 日志
-    ["logs.title"]="Log Viewer"
-    ["logs.follow"]="Follow Mode"
-    ["logs.lines"]="Number of Lines"
-    ["logs.not_found"]="Log file not found"
-    
-    # TUI 菜单
-    ["menu.main"]="Main Menu"
-    ["menu.status"]="Status"
-    ["menu.config"]="Configuration"
-    ["menu.service"]="Service"
-    ["menu.health"]="Health Check"
-    ["menu.logs"]="Logs"
-    ["menu.language"]="Language"
-    ["menu.exit"]="Exit"
-    ["menu.back"]="Back"
-    ["menu.select"]="Please select"
-    
-    # 帮助
-    ["help.title"]="Help Information"
-    ["help.usage"]="Usage"
-    ["help.example"]="Examples"
-    
-    # 错误
-    ["error.not_found"]="Not found"
-    ["error.permission"]="Permission denied"
-    ["error.invalid_param"]="Invalid parameter"
-    ["error.tor_not_running"]="Tor is not running"
-    ["error.service_failed"]="Service operation failed"
-    
-    # 确认
-    ["confirm.yes"]="Yes"
-    ["confirm.no"]="No"
-    ["confirm.cancel"]="Cancel"
-    ["confirm.continue"]="Continue?"
-    
-    # 其它
-    ["other.loading"]="Loading..."
-    ["other.saving"]="Saving..."
-    ["other.done"]="Done"
-    ["other.error"]="Error"
-    ["other.warning"]="Warning"
-    ["other.info"]="Information"
-    ["other.success"]="Success"
-    ["menu.press_any_key"]="Press any key to continue..."
-    ["status.exit_nodes"]="Exit Nodes"
-    ["error.file_not_found"]="File not found"
-    ["confirm.uninstall_service"]="Are you sure you want to uninstall the service?"
-    ["logs.no_backup"]="No backups available"
-    ["logs.available_backups"]="Available backups:"
-    ["logs.select_backup"]="Select backup number to restore (1-10): "
-    ["check.now"]="Check Now"
-    ["check.continuous2"]="Continuous Check"
-    ["check.run_diag"]="Run Diagnostics"
-    ["check.view_stats"]="View Statistics"
-    ["check.start_continuous"]="Starting continuous check (Ctrl+C to stop)"
-    ["logs.available"]="Available Logs:"
-    ["logs.tor_log"]="Tor Log"
-    ["logs.health_log"]="Health Log"
-    ["logs.app_log"]="App Log"
-    ["logs.not_exist"]="Log file does not exist:"
-    ["diag.common_cmds"]="Common Diagnostic Commands:"
-    ["diag.no_dialog"]="dialog not installed, using built-in TUI"
-    ["status.title"]="Tor Status"
-    ["status.tor.version"]="Tor Version"
-    ["status.path"]="Install Path"
-    ["status.data_dir"]="Data Directory"
-    ["status.log_dir"]="Log Directory"
-    ["status.running_status"]="Running Status"
-    ["config.torrc_path"]="Config File"
-)
+CURRENT_LANGUAGE="${LANG:-en}"
 
 #===============================================================================
 # 翻译数据 - 中文 (Chinese)
 #===============================================================================
 declare -A TRANSLATIONS_zh=(
-    # 通用
-    ["app.name"]="Tor 管理器"
-    ["app.version"]="版本"
-    ["app.description"]="Tor 代理管理系统"
-    
-    # 状态
-    ["status.title"]="状态概览"
-    ["status.tor.installed"]="Tor 已安装"
-    ["status.tor.version"]="版本"
-    ["status.tor.running"]="运行中"
-    ["status.running"]="运行中"
-    ["status.stopped"]="已停止"
-    ["status.tor.stopped"]="已停止"
-    ["status.tor.pid"]="进程ID"
-    ["status.tor.method"]="运行方式"
-    ["status.tor.socks_port"]="SOCKS 端口"
-    ["status.tor.control_port"]="Control 端口"
-    ["status.service.enabled"]="已启用"
-    ["status.service.disabled"]="已禁用"
-    ["status.service.not_installed"]="未安装"
-    
-    # 配置
-    ["config.title"]="配置管理"
-    ["config.show"]="显示配置"
-    ["config.edit"]="编辑配置"
-    ["config.wizard"]="配置向导"
-    ["config.bridge"]="网桥配置"
-    ["config.ports"]="端口配置"
-    ["config.exit_nodes"]="出口节点"
-    ["config.exclude_nodes"]="排除节点"
-    ["config.health"]="健康检测设置"
-    ["config.torrc_path"]="配置文件路径"
-    ["config.saved"]="配置已保存"
-    ["config.restart_required"]="需要重启以应用更改"
-    
-    # Bridge
-    ["bridge.add"]="添加网桥"
-    ["bridge.remove"]="删除网桥"
-    ["bridge.list"]="列出网桥"
-    ["bridge.clear"]="清除所有网桥"
-    ["bridge.count"]="网桥数量"
-    
-    # 服务
-    ["service.title"]="服务管理"
-    ["service.install"]="安装服务"
-    ["service.uninstall"]="卸载服务"
-    ["service.start"]="启动"
-    ["service.stop"]="停止"
-    ["service.restart"]="重启"
-    ["service.status"]="状态"
-    ["service.enable"]="启用开机自启"
-    ["service.disable"]="禁用开机自启"
-    ["service.installed"]="服务已安装"
-    ["service.uninstalled"]="服务已卸载"
-    ["service.running"]="服务运行中"
-    ["service.stopped"]="服务已停止"
-    
-    # 健康检测
-    ["health.title"]="健康检测"
-    ["health.check"]="立即检测"
-    ["health.continuous"]="持续检测"
-    ["health.interval"]="检测间隔"
-    ["health.max_failures"]="最大失败次数"
-    ["health.timeout"]="检测超时"
-    ["health.success"]="连接正常"
-    ["health.failed"]="连接失败"
-    ["health.restarting"]="正在重启 Tor..."
-    ["health.diagnose"]="诊断工具"
-    
-    # 日志
-    ["logs.title"]="日志查看器"
-    ["logs.follow"]="跟踪模式"
-    ["logs.lines"]="显示行数"
-    ["logs.not_found"]="日志文件不存在"
-    
-    # TUI 菜单
-    ["menu.main"]="主菜单"
-    ["menu.status"]="状态"
-    ["menu.config"]="配置"
-    ["menu.service"]="服务"
-    ["menu.health"]="健康检测"
-    ["menu.logs"]="日志"
-    ["menu.language"]="语言"
-    ["menu.exit"]="退出"
-    ["menu.back"]="返回"
-    ["menu.select"]="请选择"
-    
-    # 帮助
-    ["help.title"]="帮助信息"
-    ["help.usage"]="使用方法"
-    ["help.example"]="示例"
-    
-    # 错误
-    ["error.not_found"]="未找到"
-    ["error.permission"]="权限拒绝"
-    ["error.invalid_param"]="参数无效"
-    ["error.tor_not_running"]="Tor 未运行"
-    ["error.service_failed"]="服务操作失败"
-    
-    # 确认
-    ["confirm.yes"]="是"
-    ["confirm.no"]="否"
-    ["confirm.cancel"]="取消"
-    ["confirm.continue"]="是否继续?"
-    
-    # 其它
-    ["other.loading"]="加载中..."
-    ["other.saving"]="保存中..."
-    ["other.done"]="完成"
-    ["other.error"]="错误"
-    ["other.warning"]="警告"
-    ["other.info"]="信息"
-    ["other.success"]="成功"
-    ["menu.press_any_key"]="按任意键继续..."
-    ["status.exit_nodes"]="出口节点"
-    ["error.file_not_found"]="文件不存在"
-    ["confirm.uninstall_service"]="确定要卸载服务吗？"
-    ["logs.no_backup"]="没有可用的备份"
-    ["logs.available_backups"]="可用备份:"
-    ["logs.select_backup"]="选择要恢复的备份编号 (1-10): "
+    ["bridge.add"]="添加 Bridge"
+    ["bridge.clear"]="清除所有 Bridge"
+    ["bridge.delete_prompt"]="输入要删除的 Bridge 编号"
+    ["bridge.export"]="导出 Bridge"
+    ["bridge.format_example"]="Bridge 格式示例"
+    ["bridge.import"]="从文件导入"
+    ["bridge.remove"]="删除 Bridge"
+    ["check.continuous2"]="持续检测"
+    ["check.failed"]="失败"
+    ["check.message"]="信息"
+    ["check.no_record"]="无检测记录"
     ["check.now"]="立即检测"
-    ["check.continuous2"]="连续检测"
+    ["check.response_time"]="响应时间"
     ["check.run_diag"]="运行诊断"
+    ["check.start_continuous"]="开始持续检测 (Ctrl+C 停止)"
+    ["check.statistics"]="检测统计"
+    ["check.status"]="状态"
+    ["check.success"]="成功"
+    ["check.success_rate"]="成功率"
+    ["check.time"]="时间"
+    ["check.total"]="总计"
     ["check.view_stats"]="查看统计"
-    ["check.start_continuous"]="开始连续检测 (Ctrl+C 停止)"
-    ["logs.available"]="可用日志:"
-    ["logs.tor_log"]="Tor 日志"
-    ["logs.health_log"]="健康检测日志"
-    ["logs.app_log"]="程序日志"
-    ["logs.not_exist"]="日志文件不存在:"
-    ["diag.common_cmds"]="常用诊断命令:"
-    ["diag.no_dialog"]="dialog 未安装，使用内置 TUI"
-    ["status.title"]="Tor 状态"
-    ["status.tor.version"]="Tor 版本"
-    ["status.path"]="安装路径"
-    ["status.data_dir"]="数据目录"
-    ["status.log_dir"]="日志目录"
-    ["status.running_status"]="运行状态"
+    ["config.auto"]="自动选择"
+    ["config.bridge"]="Bridge 配置"
+    ["config.check_interval"]="当前检测间隔"
+    ["config.check_timeout"]="当前检测超时"
+    ["config.current_control"]="当前 Control 端口"
+    ["config.current_level"]="当前级别"
+    ["config.current_socks"]="当前 SOCKS 端口"
+    ["config.edit"]="编辑配置文件"
+    ["config.exclude_nodes"]="排除节点配置"
+    ["config.exclude_nodes_hint"]="如 {CN},{RU},{KP},输入 clear 清除"
+    ["config.exit"]="出口"
+    ["config.exit_nodes"]="出口节点配置"
+    ["config.exit_nodes_hint"]="如 {US},{DE},输入 clear 清除"
+    ["config.export_file"]="导出到文件"
+    ["config.file_path"]="输入文件路径"
+    ["config.health"]="健康检测配置"
+    ["config.leave_empty_show"]="留空显示"
+    ["config.log_levels"]="可用级别"
+    ["config.logs"]="日志配置"
+    ["config.max_failures"]="当前最大失败次数"
+    ["config.minutes"]="分钟"
+    ["config.new_control"]="新 Control 端口 (留空保持)"
+    ["config.new_failures"]="新最大失败次数 (留空保持，范围 1-100)"
+    ["config.new_interval"]="新检测间隔，秒 (留空保持，最小 10)"
+    ["config.new_log_level"]="新日志级别 (留空保持)"
+    ["config.new_socks"]="新 SOCKS 端口 (留空保持)"
+    ["config.none"]="无"
+    ["config.ports"]="端口配置"
+    ["config.restore"]="恢复备份"
+    ["config.seconds"]="秒"
+    ["config.set_exclude_nodes"]="设置排除节点"
+    ["config.set_exit_nodes"]="设置出口节点"
     ["config.torrc_path"]="配置文件"
+    ["config.wizard"]="配置向导"
+    ["confirm.uninstall_service"]="确定要卸载服务吗？"
+    ["diag.common_cmds"]="常用诊断命令"
+    ["diag.no_dialog"]="dialog 未安装，使用内置 TUI"
+    ["error.file_not_found"]="文件未找到"
+    ["error.not_found"]="未找到"
+    ["logs.app"]="程序日志"
+    ["logs.available"]="可用日志"
+    ["logs.available_backups"]="可用备份"
+    ["logs.health"]="健康检测日志"
+    ["logs.health_log"]="健康日志"
+    ["logs.no_backup"]="没有可用的备份"
+    ["logs.not_exist"]="日志文件不存在"
+    ["logs.select_backup"]="选择要恢复的备份编号 (1-10):"
+    ["logs.systemd"]="Systemd 服务日志"
+    ["logs.tor"]="Tor 运行日志"
+    ["logs.tor_log"]="Tor 日志"
+    ["menu.back"]="返回"
+    ["menu.check"]="连接检测"
+    ["menu.config"]="配置管理"
+    ["menu.diag"]="诊断工具"
+    ["menu.exit"]="退出"
+    ["menu.language"]="语言设置"
+    ["menu.logs"]="查看日志"
+    ["menu.main"]="主菜单"
+    ["menu.press_any_key"]="按任意键继续..."
+    ["menu.select"]="请选择"
+    ["menu.select_prompt"]="请选择:"
+    ["menu.service"]="服务管理"
+    ["menu.status"]="状态"
+    ["msg.config_updated"]="配置已更新"
+    ["msg.goodbye"]="再见!"
+    ["other.error"]="错误"
+    ["other.success"]="成功"
+    ["service.disable"]="禁用开机自启"
+    ["service.enable"]="启用开机自启"
+    ["service.install_sys"]="安装 systemd 服务"
+    ["service.restart"]="重启服务"
+    ["service.start"]="启动服务"
+    ["service.status"]="查看详细状态"
+    ["service.stop"]="停止服务"
+    ["service.uninstall_sys"]="卸载 systemd 服务"
+    ["status.autostart"]="自启"
+    ["status.config_overview"]="配置概览"
+    ["status.connection"]="连接"
+    ["status.count"]="个"
+    ["status.current"]="当前状态"
+    ["status.data_dir"]="数据目录"
+    ["status.disabled"]="未启用"
+    ["status.enabled"]="已启用"
+    ["status.error"]="异常"
+    ["status.exit"]="出口"
+    ["status.exit_ip"]="出口IP"
+    ["status.exit_nodes"]="出口节点"
+    ["status.listening"]="(监听中)"
+    ["status.log_dir"]="日志目录"
+    ["status.network"]="网络连接"
+    ["status.no"]="否"
+    ["status.not_installed"]="未安装"
+    ["status.not_listening"]="(未监听)"
+    ["status.ok"]="正常"
+    ["status.path"]="路径"
+    ["status.pid"]="PID"
+    ["status.ports"]="端口监听"
+    ["status.running"]="运行状态"
+    ["status.running2"]="运行中"
+    ["status.running_status"]="运行状态"
+    ["status.service"]="服务"
+    ["status.status"]="状态"
+    ["status.stopped"]="未运行"
+    ["status.title"]="状态概览"
+    ["status.tor.version"]="Tor 版本"
+    ["status.tor_installed"]="Tor 安装"
+    ["status.unknown"]="未知"
+    ["status.uptime"]="运行"
+    ["status.version"]="版本"
+    ["status.yes"]="是"
+)
+
+#===============================================================================
+# 翻译数据 - 英文 (English)
+#===============================================================================
+declare -A TRANSLATIONS_en=(
+    ["bridge.add"]="Add Bridge"
+    ["bridge.clear"]="Clear All Bridges"
+    ["bridge.delete_prompt"]="Enter bridge number to delete"
+    ["bridge.export"]="Export Bridges"
+    ["bridge.format_example"]="Bridge Format Example"
+    ["bridge.import"]="Import from File"
+    ["bridge.remove"]="Remove Bridge"
+    ["check.continuous2"]="Continuous Check"
+    ["check.failed"]="Failed"
+    ["check.message"]="Message"
+    ["check.no_record"]="No check record"
+    ["check.now"]="Check Now"
+    ["check.response_time"]="Response Time"
+    ["check.run_diag"]="Run Diagnostics"
+    ["check.start_continuous"]="Starting continuous check (Ctrl+C to stop)"
+    ["check.statistics"]="Check Statistics"
+    ["check.status"]="Status"
+    ["check.success"]="Success"
+    ["check.success_rate"]="Success Rate"
+    ["check.time"]="Time"
+    ["check.total"]="Total"
+    ["check.view_stats"]="View Statistics"
+    ["config.auto"]="Auto Select"
+    ["config.bridge"]="Bridge Configuration"
+    ["config.check_interval"]="Current Check Interval"
+    ["config.check_timeout"]="Current Check Timeout"
+    ["config.current_control"]="Current Control Port"
+    ["config.current_level"]="Current Level"
+    ["config.current_socks"]="Current SOCKS Port"
+    ["config.edit"]="Edit Config File"
+    ["config.exclude_nodes"]="Exclude Nodes Configuration"
+    ["config.exclude_nodes_hint"]="e.g. {CN},{RU},{KP}, enter clear to remove"
+    ["config.exit"]="Exit"
+    ["config.exit_nodes"]="Exit Nodes Configuration"
+    ["config.exit_nodes_hint"]="e.g. {US},{DE}, enter clear to remove"
+    ["config.export_file"]="Export to file"
+    ["config.file_path"]="Enter file path"
+    ["config.health"]="Health Check Settings"
+    ["config.leave_empty_show"]="empty to show"
+    ["config.log_levels"]="Available Levels"
+    ["config.logs"]="Log Configuration"
+    ["config.max_failures"]="Current Max Failures"
+    ["config.minutes"]="minutes"
+    ["config.new_control"]="New Control Port (empty to keep)"
+    ["config.new_failures"]="New max failures (empty to keep, range 1-100)"
+    ["config.new_interval"]="New interval in seconds (empty to keep, min 10)"
+    ["config.new_log_level"]="New Log Level (empty to keep)"
+    ["config.new_socks"]="New SOCKS Port (empty to keep)"
+    ["config.none"]="None"
+    ["config.ports"]="Port Configuration"
+    ["config.restore"]="Restore Backup"
+    ["config.seconds"]="seconds"
+    ["config.set_exclude_nodes"]="Set Exclude Nodes"
+    ["config.set_exit_nodes"]="Set Exit Nodes"
+    ["config.torrc_path"]="Config File"
+    ["config.wizard"]="Configuration Wizard"
+    ["confirm.uninstall_service"]="Are you sure you want to uninstall the service?"
+    ["diag.common_cmds"]="Common Diagnostic Commands"
+    ["diag.no_dialog"]="dialog not installed, using built-in TUI"
+    ["error.file_not_found"]="File not found"
+    ["error.not_found"]="Not Found"
+    ["logs.app"]="Application Log"
+    ["logs.available"]="Available Logs"
+    ["logs.available_backups"]="Available backups"
+    ["logs.health"]="Health Check Log"
+    ["logs.health_log"]="Health Log"
+    ["logs.no_backup"]="No backups available"
+    ["logs.not_exist"]="Log file does not exist"
+    ["logs.select_backup"]="Select backup number to restore (1-10):"
+    ["logs.systemd"]="Systemd Service Log"
+    ["logs.tor"]="Tor Runtime Log"
+    ["logs.tor_log"]="Tor Log"
+    ["menu.back"]="Back"
+    ["menu.check"]="Connection Check"
+    ["menu.config"]="Configuration"
+    ["menu.diag"]="Diagnostic Tools"
+    ["menu.exit"]="Exit"
+    ["menu.language"]="Language"
+    ["menu.logs"]="View Logs"
+    ["menu.main"]="Main Menu"
+    ["menu.press_any_key"]="Press any key to continue..."
+    ["menu.select"]="Please select"
+    ["menu.select_prompt"]="Select:"
+    ["menu.service"]="Service Management"
+    ["menu.status"]="Status"
+    ["msg.config_updated"]="Configuration Updated"
+    ["msg.goodbye"]="Goodbye!"
+    ["other.error"]="Error"
+    ["other.success"]="Success"
+    ["service.disable"]="Disable Auto-start"
+    ["service.enable"]="Enable Auto-start"
+    ["service.install_sys"]="Install systemd Service"
+    ["service.restart"]="Restart Service"
+    ["service.start"]="Start Service"
+    ["service.status"]="View Detailed Status"
+    ["service.stop"]="Stop Service"
+    ["service.uninstall_sys"]="Uninstall systemd Service"
+    ["status.autostart"]="Auto-start"
+    ["status.config_overview"]="Config Overview"
+    ["status.connection"]="Connection"
+    ["status.count"]=""
+    ["status.current"]="Current Status"
+    ["status.data_dir"]="Data Directory"
+    ["status.disabled"]="Disabled"
+    ["status.enabled"]="Enabled"
+    ["status.error"]="Error"
+    ["status.exit"]="Exit"
+    ["status.exit_ip"]="Exit IP"
+    ["status.exit_nodes"]="Exit Nodes"
+    ["status.listening"]="(Listening)"
+    ["status.log_dir"]="Log Directory"
+    ["status.network"]="Network Connection"
+    ["status.no"]="No"
+    ["status.not_installed"]="Not Installed"
+    ["status.not_listening"]="(Not Listening)"
+    ["status.ok"]="OK"
+    ["status.path"]="Path"
+    ["status.pid"]="PID"
+    ["status.ports"]="Port Listening"
+    ["status.running"]="Running Status"
+    ["status.running2"]="Running"
+    ["status.running_status"]="Running Status"
+    ["status.service"]="Service"
+    ["status.status"]="Status"
+    ["status.stopped"]="Stopped"
+    ["status.title"]="Status Overview"
+    ["status.tor.version"]="Tor Version"
+    ["status.tor_installed"]="Tor Installation"
+    ["status.unknown"]="Unknown"
+    ["status.uptime"]="Uptime"
+    ["status.version"]="Version"
+    ["status.yes"]="Yes"
 )
 
 #===============================================================================
 # 翻译数据 - 西班牙语 (Spanish)
 #===============================================================================
 declare -A TRANSLATIONS_es=(
-    # 通用
-    ["app.name"]="Tor Manager"
-    ["app.version"]="Versión"
-    ["app.description"]="Sistema de Gestión de Proxy Tor"
-    
-    # 状态
-    ["status.title"]="Estado del Sistema"
-    ["status.tor.installed"]="Tor Instalado"
-    ["status.tor.version"]="Versión"
-    ["status.tor.running"]="Ejecutando"
-    ["status.running"]="Ejecutando"
-    ["status.stopped"]="Detenido"
-    ["status.tor.stopped"]="Detenido"
-    ["status.tor.pid"]="PID"
-    ["status.tor.method"]="Método de Ejecución"
-    ["status.tor.socks_port"]="Puerto SOCKS"
-    ["status.tor.control_port"]="Puerto de Control"
-    ["status.service.enabled"]="Habilitado"
-    ["status.service.disabled"]="Deshabilitado"
-    ["status.service.not_installed"]="No Instalado"
-    
-    # 配置
-    ["config.title"]="Gestión de Configuración"
-    ["config.show"]="Mostrar Configuración"
-    ["config.edit"]="Editar Configuración"
-    ["config.wizard"]="Asistente de Configuración"
-    ["config.bridge"]="Configuración de Bridge"
-    ["config.ports"]="Configuración de Puertos"
-    ["config.exit_nodes"]="Nodos de Salida"
-    ["config.exclude_nodes"]="Nodos Excluidos"
-    ["config.health"]="Configuración de Salud"
-    ["config.torrc_path"]="Ruta de Torrc"
-    ["config.saved"]="Configuración guardada"
-    ["config.restart_required"]="Reinicio necesario para aplicar cambios"
-    
-    # Bridge
     ["bridge.add"]="Agregar Bridge"
+    ["bridge.clear"]="Borrar Todos los Bridges"
+    ["bridge.delete_prompt"]="Ingrese número de Bridge a eliminar"
+    ["bridge.export"]="Exportar Bridges"
+    ["bridge.format_example"]="Ejemplo de Formato Bridge"
+    ["bridge.import"]="Importar desde Archivo"
     ["bridge.remove"]="Eliminar Bridge"
-    ["bridge.list"]="Listar Bridges"
-    ["bridge.clear"]="Limpiar Todos los Bridges"
-    ["bridge.count"]="Cantidad de Bridges"
-    
-    # 服务
-    ["service.title"]="Gestión de Servicios"
-    ["service.install"]="Instalar Servicio"
-    ["service.uninstall"]="Desinstalar Servicio"
-    ["service.start"]="Iniciar"
-    ["service.stop"]="Detener"
-    ["service.restart"]="Reiniciar"
-    ["service.status"]="Estado"
-    ["service.enable"]="Habilitar Inicio Automático"
-    ["service.disable"]="Deshabilitar Inicio Automático"
-    ["service.installed"]="Servicio instalado"
-    ["service.uninstalled"]="Servicio desinstalado"
-    ["service.running"]="Servicio en ejecución"
-    ["service.stopped"]="Servicio detenido"
-    
-    # 健康检测
-    ["health.title"]="Verificación de Salud"
-    ["health.check"]="Verificar Ahora"
-    ["health.continuous"]="Verificación Continua"
-    ["health.interval"]="Intervalo de Verificación"
-    ["health.max_failures"]="Máximo de Fallos"
-    ["health.timeout"]="Tiempo de Espera"
-    ["health.success"]="Conexión OK"
-    ["health.failed"]="Conexión Fallida"
-    ["health.restarting"]="Reiniciando Tor..."
-    ["health.diagnose"]="Herramienta de Diagnóstico"
-    
-    # 日志
-    ["logs.title"]="Visor de Registros"
-    ["logs.follow"]="Modo Seguimiento"
-    ["logs.lines"]="Número de Líneas"
-    ["logs.not_found"]="Archivo de registro no encontrado"
-    
-    # TUI 菜单
-    ["menu.main"]="Menú Principal"
-    ["menu.status"]="Estado"
-    ["menu.config"]="Configuración"
-    ["menu.service"]="Servicios"
-    ["menu.health"]="Salud"
-    ["menu.logs"]="Registros"
-    ["menu.language"]="Idioma"
-    ["menu.exit"]="Salir"
-    ["menu.back"]="Volver"
-    ["menu.select"]="Por favor seleccione"
-    
-    # 帮助
-    ["help.title"]="Información de Ayuda"
-    ["help.usage"]="Uso"
-    ["help.example"]="Ejemplos"
-    
-    # 错误
-    ["error.not_found"]="No encontrado"
-    ["error.permission"]="Permiso denegado"
-    ["error.invalid_param"]="Parámetro inválido"
-    ["error.tor_not_running"]="Tor no está ejecutando"
-    ["error.service_failed"]="Operación de servicio fallida"
-    
-    # 确认
-    ["confirm.yes"]="Sí"
-    ["confirm.no"]="No"
-    ["confirm.cancel"]="Cancelar"
-    ["confirm.continue"]="Continuar?"
-    
-    # 其它
-    ["other.loading"]="Cargando..."
-    ["other.saving"]="Guardando..."
-    ["other.done"]="Hecho"
-    ["other.error"]="Error"
-    ["other.warning"]="Advertencia"
-    ["other.info"]="Información"
-    ["other.success"]="Éxito"
-    ["menu.press_any_key"]="Presione cualquier tecla para continuar..."
-    ["status.exit_nodes"]="Nodos de Salida"
-    ["error.file_not_found"]="Archivo no encontrado"
-    ["confirm.uninstall_service"]="¿Está seguro de que desea desinstalar el servicio?"
-    ["logs.no_backup"]="No hay copias de seguridad disponibles"
-    ["logs.available_backups"]="Copias de seguridad disponibles:"
-    ["logs.select_backup"]="Seleccione el número de copia de seguridad a restaurar (1-10): "
-    ["check.now"]="Verificar Ahora"
     ["check.continuous2"]="Verificación Continua"
-    ["check.run_diag"]="Ejecutar Diagnósticos"
-    ["check.view_stats"]="Ver Estadísticas"
+    ["check.failed"]="Fallido"
+    ["check.message"]="Mensaje"
+    ["check.no_record"]="Sin registro de verificación"
+    ["check.now"]="Verificar Ahora"
+    ["check.response_time"]="Tiempo de Respuesta"
+    ["check.run_diag"]="Ejecutar Diagnóstico"
     ["check.start_continuous"]="Iniciando verificación continua (Ctrl+C para detener)"
-    ["logs.available"]="Logs Disponibles:"
-    ["logs.tor_log"]="Log de Tor"
-    ["logs.health_log"]="Log de Salud"
-    ["logs.app_log"]="Log de Aplicación"
-    ["logs.not_exist"]="El archivo de log no existe:"
-    ["diag.common_cmds"]="Comandos Diagnósticos Comunes:"
+    ["check.statistics"]="Estadísticas de Verificación"
+    ["check.status"]="Estado"
+    ["check.success"]="Éxito"
+    ["check.success_rate"]="Tasa de Éxito"
+    ["check.time"]="Tiempo"
+    ["check.total"]="Total"
+    ["check.view_stats"]="Ver Estadísticas"
+    ["config.auto"]="Selección Automática"
+    ["config.bridge"]="Configuración de Bridge"
+    ["config.check_interval"]="Intervalo de Verificación Actual"
+    ["config.check_timeout"]="Tiempo de Espera Actual"
+    ["config.current_control"]="Puerto de Control Actual"
+    ["config.current_level"]="Nivel Actual"
+    ["config.current_socks"]="Puerto SOCKS Actual"
+    ["config.edit"]="Editar Archivo de Configuración"
+    ["config.exclude_nodes"]="Configuración de Nodos Excluidos"
+    ["config.exclude_nodes_hint"]="ej. {CN},{RU},{KP}, escriba clear para eliminar"
+    ["config.exit"]="Salida"
+    ["config.exit_nodes"]="Configuración de Nodos de Salida"
+    ["config.exit_nodes_hint"]="ej. {US},{DE}, escriba clear para eliminar"
+    ["config.export_file"]="Exportar a archivo"
+    ["config.file_path"]="Ingrese ruta del archivo"
+    ["config.health"]="Configuración de Verificación de Salud"
+    ["config.leave_empty_show"]="vacío para mostrar"
+    ["config.log_levels"]="Niveles Disponibles"
+    ["config.logs"]="Configuración de Registros"
+    ["config.max_failures"]="Máximo de Fallos Actual"
+    ["config.minutes"]="minutos"
+    ["config.new_control"]="Nuevo Puerto de Control (vacío para mantener)"
+    ["config.new_failures"]="Nuevo máximo de fallos (vacío para mantener, rango 1-100)"
+    ["config.new_interval"]="Nuevo intervalo en segundos (vacío para mantener, mín 10)"
+    ["config.new_log_level"]="Nuevo Nivel de Log (vacío para mantener)"
+    ["config.new_socks"]="Nuevo Puerto SOCKS (vacío para mantener)"
+    ["config.none"]="Ninguno"
+    ["config.ports"]="Configuración de Puertos"
+    ["config.restore"]="Restaurar Copia de Seguridad"
+    ["config.seconds"]="segundos"
+    ["config.set_exclude_nodes"]="Establecer Nodos Excluidos"
+    ["config.set_exit_nodes"]="Establecer Nodos de Salida"
+    ["config.torrc_path"]="Archivo de Configuración"
+    ["config.wizard"]="Asistente de Configuración"
+    ["confirm.uninstall_service"]="¿Está seguro de que desea desinstalar el servicio?"
+    ["diag.common_cmds"]="Comandos de Diagnóstico Comunes"
     ["diag.no_dialog"]="dialog no instalado, usando TUI incorporado"
-    ["status.title"]="Estado de Tor"
-    ["status.tor.version"]="Versión de Tor"
-    ["status.path"]="Ruta de Instalación"
+    ["error.file_not_found"]="Archivo no encontrado"
+    ["error.not_found"]="No Encontrado"
+    ["logs.app"]="Registro de Aplicación"
+    ["logs.available"]="Registros Disponibles"
+    ["logs.available_backups"]="Copias de seguridad disponibles"
+    ["logs.health"]="Registro de Verificación de Salud"
+    ["logs.health_log"]="Registro de Salud"
+    ["logs.no_backup"]="No hay copias de seguridad disponibles"
+    ["logs.not_exist"]="El archivo de registro no existe"
+    ["logs.select_backup"]="Seleccione número de copia a restaurar (1-10):"
+    ["logs.systemd"]="Registro de Servicio Systemd"
+    ["logs.tor"]="Registro de Ejecución de Tor"
+    ["logs.tor_log"]="Registro de Tor"
+    ["menu.back"]="Volver"
+    ["menu.check"]="Verificación de Conexión"
+    ["menu.config"]="Configuración"
+    ["menu.diag"]="Herramientas de Diagnóstico"
+    ["menu.exit"]="Salir"
+    ["menu.language"]="Idioma"
+    ["menu.logs"]="Ver Registros"
+    ["menu.main"]="Menú Principal"
+    ["menu.press_any_key"]="Presione cualquier tecla para continuar..."
+    ["menu.select"]="Por favor seleccione"
+    ["menu.select_prompt"]="Seleccione:"
+    ["menu.service"]="Gestión de Servicios"
+    ["menu.status"]="Estado"
+    ["msg.config_updated"]="Configuración Actualizada"
+    ["msg.goodbye"]="¡Adiós!"
+    ["other.error"]="Error"
+    ["other.success"]="Éxito"
+    ["service.disable"]="Deshabilitar Inicio Automático"
+    ["service.enable"]="Habilitar Inicio Automático"
+    ["service.install_sys"]="Instalar Servicio systemd"
+    ["service.restart"]="Reiniciar Servicio"
+    ["service.start"]="Iniciar Servicio"
+    ["service.status"]="Ver Estado Detallado"
+    ["service.stop"]="Detener Servicio"
+    ["service.uninstall_sys"]="Desinstalar Servicio systemd"
+    ["status.autostart"]="Inicio Automático"
+    ["status.config_overview"]="Resumen de Configuración"
+    ["status.connection"]="Conexión"
+    ["status.count"]=""
+    ["status.current"]="Estado Actual"
     ["status.data_dir"]="Directorio de Datos"
-    ["status.log_dir"]="Directorio de Logs"
+    ["status.disabled"]="Deshabilitado"
+    ["status.enabled"]="Habilitado"
+    ["status.error"]="Error"
+    ["status.exit"]="Salida"
+    ["status.exit_ip"]="IP de Salida"
+    ["status.exit_nodes"]="Nodos de Salida"
+    ["status.listening"]="(Escuchando)"
+    ["status.log_dir"]="Directorio de Registros"
+    ["status.network"]="Conexión de Red"
+    ["status.no"]="No"
+    ["status.not_installed"]="No Instalado"
+    ["status.not_listening"]="(No Escuchando)"
+    ["status.ok"]="OK"
+    ["status.path"]="Ruta"
+    ["status.pid"]="PID"
+    ["status.ports"]="Escucha de Puertos"
+    ["status.running"]="Estado de Ejecución"
+    ["status.running2"]="En Ejecución"
     ["status.running_status"]="Estado de Ejecución"
-    ["config.torrc_path"]="Archivo de Config"
+    ["status.service"]="Servicio"
+    ["status.status"]="Estado"
+    ["status.stopped"]="Detenido"
+    ["status.title"]="Resumen de Estado"
+    ["status.tor.version"]="Versión de Tor"
+    ["status.tor_installed"]="Instalación de Tor"
+    ["status.unknown"]="Desconocido"
+    ["status.uptime"]="Tiempo de Ejecución"
+    ["status.version"]="Versión"
+    ["status.yes"]="Sí"
 )
 
 #===============================================================================
-# 翻译数据 - 阿拉伯语 (Arabic)
+# 翻译函数
+#===============================================================================
+t() {
+    local key="$1"
+    local default="$2"
+    local lang="${CURRENT_LANGUAGE:-en}"
+    local translation=""
+    
+    case "${lang}" in
+        zh) eval "translation=\${TRANSLATIONS_zh[$key]:-}" ;;
+        es) eval "translation=\${TRANSLATIONS_es[$key]:-}" ;;
+        *)  eval "translation=\${TRANSLATIONS_en[$key]:-}" ;;
+    esac
+    
+    if [[ -n "${translation}" ]]; then
+        echo "${translation}"
+    else
+        echo "${default}"
+    fi
+}
+
+# 设置语言
+set_language() {
+    CURRENT_LANGUAGE="$1"
+}
+
+# 获取语言
+get_language() {
+    echo "${CURRENT_LANGUAGE:-en}"
+}
+
+# 获取语言名称
+get_language_name() {
+    case "$1" in
+        zh) echo "中文" ;;
+        es) echo "Español" ;;
+        en) echo "English" ;;
+        *)  echo "English" ;;
+    esac
+}
